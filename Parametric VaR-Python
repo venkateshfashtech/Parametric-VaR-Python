@@ -1,0 +1,64 @@
+# Simple Moving average Method
+
+import pandas as pd, os, pandas_datareader.data as web,datetime as dt  # sentdex youtube
+
+os.chdir("F:\Python\Historical Var")
+start = dt.datetime(2000, 1, 1)
+end = dt.datetime(2018, 10, 31)
+df = web.DataReader('TSLA', 'yahoo', start, end)	 #to download price timeseries from web Tsla- ticker,yahoo-source
+df.to_csv('PriceTimeSeries -Tesla.csv') 		 #to have a copy of untouched timeseries
+
+df = pd.read_csv('PriceTimeSeries -Tesla.csv', parse_dates=True, index_col='Date')
+df['percent'] = df['Adj Close'].pct_change()*100
+dropped_na = df.dropna()
+std_dev = float(dropped_na.loc[;,'Adj Close'].std())						#http://www.datasciencemadesimple.com
+Pnl = float(df.loc['2018-10-31']['Adj Close']) - (std_dev* 1.65)
+Print("The Standard deviation is {}".format(std_dev))
+Print("The Parametric Var with 95% confidence level is {}".format(Pnl))
+
+writer = pd.ExcelWriter('Parametric Var-Tesla.xlsx', engine='xlsxwriter')
+df.to_excel(writer, sheet_name='Sheet1')
+pnl_text = "Parametric VaR PnL for Tesla"
+writer.sheets['Sheet1'].write(4,15,pnl_text)
+Pnl.to_excel(writer, sheet_name='Sheet1', startcol=28, startrow=5)
+writer.save()
+
+# cross chck std dev with stdev.s() function in excel
+#=========================================
+
+# Exponentially Weighted Moving Average -0.94 Decay
+
+import pandas as pd, os, pandas_datareader.data as web,datetime as dt,numpy as np  # sentdex youtube
+
+os.chdir("F:\Python\Historical Var")
+start = dt.datetime(2000, 1, 1)
+end = dt.datetime(2018, 10, 31)
+df = web.DataReader('TSLA', 'yahoo', start, end)	 #to download price timeseries from web Tsla- ticker,yahoo-source
+df.to_csv('PriceTimeSeries -Tesla.csv') 		 #to have a copy of untouched timeseries
+
+df = pd.read_csv('PriceTimeSeries -Tesla.csv', parse_dates=True, index_col='Date')
+df['percent'] = df['Adj Close'].pct_change()*100
+df['log_rtrn'] = np.log(df.price/df.price.shift(1)).dropna()
+df['Sqrd_rtrn'] = df['log_rtrn']**2
+row_count = len(percent)
+
+decay =[]
+for x in range(row_count-1):
+	if x == 0:
+		decay.append(1-.94)	
+	else:
+		decay.append(decay[x-1]*.94)
+df['decay'] =decay
+df['product'] = df['decay'] * df['Sqrd_rtrn']
+sqrt = np.sqrt(df['product'].sum(axis =1))
+Pnl = float(df.loc['2018-10-31']['Adj Close']) -(1.65*sqrt)
+print("The volatility is {}".format(sqrt))
+Print("The Parametric Var at 95% confidence leve with 0.94 decay is {}".format(Pnl)) 
+
+
+writer = pd.ExcelWriter('Parametric Var-Tesla.xlsx', engine='xlsxwriter')
+df.to_excel(writer, sheet_name='Sheet1')
+pnl_text = "Parametric VaR PnL for Tesla"
+writer.sheets['Sheet1'].write(4,15,pnl_text)
+Pnl.to_excel(writer, sheet_name='Sheet1', startcol=28, startrow=5)
+writer.save()
